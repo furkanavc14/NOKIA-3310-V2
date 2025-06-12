@@ -1,0 +1,783 @@
+<!DOCTYPE html> <!-- HTML5 doctype bildirimi -->
+<html lang="tr"> <!-- Sayfa dili Türkçe -->
+<head>
+    <meta charset="UTF-8"> <!-- Türkçe karakter desteği -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Mobil uyumlu görünüm -->
+    <title>🐍 NOKİA 3310 V2</title> <!-- Sayfa başlığı -->
+    <style>
+        * {
+            margin: 0; /* Varsayılan margin sıfırla */
+            padding: 0; /* Varsayılan padding sıfırla */
+            box-sizing: border-box; /* Kutu modeli ayarı */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif; /* Yazı tipi */
+            background: linear-gradient(135deg, #1e293b, #7c3aed, #1e293b); /* Arka plan gradyanı */
+            min-height: 100vh; /* Minimum ekran yüksekliği */
+            display: flex; /* Ortalamak için flex kullan */
+            align-items: center; /* Dikey ortala */
+            justify-content: center; /* Yatay ortala */
+            color: white; /* Yazı rengi */
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.2); /* Yarı saydam arka plan */
+            backdrop-filter: blur(10px); /* Arka planı bulanıklaştırır */
+            border-radius: 20px; /* Köşeleri yuvarlatır */
+            padding: 30px; /* İç boşluk */
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); /* Gölge efekti */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* İnce kenarlık */
+        }
+
+        .game-header {
+            display: flex; /* Esnek kutu düzeni */
+            justify-content: space-between; /* Elemanları iki yana yay */
+            align-items: center; /* Dikeyde ortala */
+            margin-bottom: 30px; /* Alt boşluk */
+            flex-wrap: wrap; /* Taşma durumunda sar */
+            gap: 20px; /* Boşluklar arası mesafe */
+        }
+
+        .game-title {
+            font-size: 2.5rem; /* Başlık yazı boyutu */
+            font-weight: bold; /* Başlık kalın yazı */
+            color: #00ff88; /* Başlık rengi */
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); /* Başlık gölgesi */
+        }
+
+        .game-stats {
+            display: flex; /* Esnek kutu düzeni */
+            gap: 30px; /* Elemanlar arası mesafe */
+            align-items: center; /* Dikeyde ortala */
+        }
+
+        .stat-item {
+            text-align: center; /* Merkezde hizala */
+        }
+
+        .stat-value {
+            font-size: 1.5rem; /* Değer yazı boyutu */
+            font-weight: bold; /* Değer kalın yazı */
+            color: #00ff88; /* Değer rengi */
+        }
+
+        .stat-label {
+            font-size: 0.8rem; /* Etiket yazı boyutu */
+            color: #94a3b8; /* Etiket rengi */
+            margin-top: 2px; /* Üstten boşluk */
+        }
+
+        .level-badge {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b); /* Seviye rozet gradyanı */
+            color: black; /* Yazı rengi */
+            padding: 5px 15px; /* İç boşluk */
+            border-radius: 20px; /* Köşe yuvarlama */
+            font-weight: bold; /* Kalın yazı */
+            font-size: 0.9rem; /* Yazı boyutu */
+        }
+
+        .game-canvas {
+            border: 3px solid rgba(255, 255, 255, 0.2); /* Tuval kenarlığı */
+            border-radius: 15px; /* Tuval köşe yuvarlama */
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3); /* Tuval gölgesi */
+            background: linear-gradient(45deg, #1a202c, #2d3748); /* Tuval arka plan gradyanı */
+            position: relative; /* Konumlandırma için relatif */
+            overflow: hidden; /* Taşmayı gizle */
+        }
+
+        .game-canvas::before {
+            content: ''; /* İçerik yok */
+            position: absolute; /* Mutlak konumlandırma */
+            top: 0; /* Üstten sıfırla */
+            left: 0; /* Soldan sıfırla */
+            right: 0; /* Sağdan sıfırla */
+            bottom: 0; /* Alttan sıfırla */
+            background: 
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); /* Çizgili arka plan */
+            background-size: 20px 20px; /* Arka plan boyutu */
+            pointer-events: none; /* Olayları engelleme */
+        }
+
+        #gameCanvas {
+            display: block; /* Blok düzende göster */
+            border-radius: 12px; /* Kenar yuvarlama */
+        }
+
+        .game-controls {
+            display: flex; /* Esnek kutu düzeni */
+            justify-content: space-between; /* Elemanları iki yana yay */
+            align-items: center; /* Dikeyde ortala */
+            margin-top: 25px; /* Üstten boşluk */
+            flex-wrap: wrap; /* Taşma durumunda sar */
+            gap: 15px; /* Elemanlar arası mesafe */
+        }
+
+        .control-buttons {
+            display: flex; /* Esnek kutu düzeni */
+            gap: 15px; /* Butonlar arası mesafe */
+        }
+
+        .btn {
+            padding: 12px 20px; /* İç boşluk */
+            border: none; /* Kenarlık yok */
+            border-radius: 10px; /* Kenar yuvarlama */
+            font-weight: bold; /* Kalın yazı */
+            cursor: pointer; /* Üzerine gelince imleci değiştir */
+            transition: all 0.3s ease; /* Geçiş efekti */
+            display: flex; /* Esnek kutu düzeni */
+            align-items: center; /* Dikeyde ortala */
+            gap: 8px; /* İkon ve metin arası mesafe */
+            font-size: 0.9rem; /* Yazı boyutu */
+        }
+
+        .btn:hover {
+            transform: translateY(-2px); /* Üzerine gelince yukarı kaydır */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Gölge efekti */
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8); /* Ana buton gradyanı */
+            color: white; /* Yazı rengi */
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #10b981, #059669); /* Başarı butonu gradyanı */
+            color: white; /* Yazı rengi */
+        }
+
+        .btn:disabled {
+            opacity: 0.5; /* Yarı saydam yap */
+            cursor: not-allowed; /* İmleci engelli yap */
+            transform: none; /* Kaydırma efektini kaldır */
+        }
+
+        .game-instructions {
+            color: rgba(255, 255, 255, 0.7); /* Talimat rengi */
+            font-size: 0.85rem; /* Yazı boyutu */
+            text-align: right; /* Sağa yasla */
+        }
+
+        .food-legend {
+            display: flex; /* Esnek kutu düzeni */
+            justify-content: center; /* Ortala */
+            gap: 25px; /* Elemanlar arası mesafe */
+            margin-top: 20px; /* Üstten boşluk */
+            font-size: 0.85rem; /* Yazı boyutu */
+            color: rgba(255, 255, 255, 0.8); /* Renk */
+        }
+
+        .legend-item {
+            display: flex; /* Esnek kutu düzeni */
+            align-items: center; /* Dikeyde ortala */
+            gap: 8px; /* İkon ve metin arası mesafe */
+        }
+
+        .legend-color {
+            width: 12px; /* Renk çemberi genişliği */
+            height: 12px; /* Renk çemberi yüksekliği */
+            border-radius: 50%; /* Tam daire yap */
+        }
+
+        .overlay {
+            position: absolute; /* Mutlak konumlandırma */
+            top: 0; /* Üstten sıfırla */
+            left: 0; /* Soldan sıfırla */
+            width: 100%; /* Tam genişlik */
+            height: 100%; /* Tam yükseklik */
+            background: rgba(0, 0, 0, 0.8); /* Koyu yarı saydam arka plan */
+            display: flex; /* Esnek kutu düzeni */
+            flex-direction: column; /* Dikey yönde yerleştir */
+            align-items: center; /* Ortala */
+            justify-content: center; /* Ortala */
+            border-radius: 12px; /* Kenar yuvarlama */
+            z-index: 10; /* Üstte göster */
+        }
+
+        .overlay h2 {
+            font-size: 3rem; /* Başlık yazı boyutu */
+            margin-bottom: 20px; /* Alt boşluk */
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Gölge efekti */
+        }
+
+        .overlay p {
+            font-size: 1.2rem; /* Metin yazı boyutu */
+            margin-bottom: 10px; /* Alt boşluk */
+        }
+
+        .pause-overlay h2 {
+            color: #fbbf24; /* Başlık rengi */
+        }
+
+        .gameover-overlay h2 {
+            color: #ef4444; /* Başlık rengi */
+        }
+
+        .new-highscore {
+            color: #fbbf24; /* Renk */
+            font-size: 1.1rem; /* Yazı boyutu */
+            margin-top: 10px; /* Üstten boşluk */
+            animation: pulse 2s infinite; /* Pulse animasyonu */
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; } /* Başlangıç ve bitiş opaklığı */
+            50% { opacity: 0.7; } /* Ortada opaklık */
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px; /* İç boşluk */
+                margin: 10px; /* Dış boşluk */
+            }
+            
+            .game-header {
+                flex-direction: column; /* Dikey yerleşim */
+                text-align: center; /* Ortala */
+            }
+            
+            .game-title {
+                font-size: 2rem; /* Başlık yazı boyutu */
+            }
+            
+            .game-stats {
+                gap: 20px; /* Elemanlar arası mesafe */
+            }
+            
+            .game-controls {
+                flex-direction: column; /* Dikey yerleşim */
+                align-items: center; /* Ortala */
+            }
+            
+            .game-instructions {
+                text-align: center; /* Ortala */
+            }
+            
+            .food-legend {
+                flex-wrap: wrap; /* Sarma */
+                gap: 15px; /* Elemanlar arası mesafe */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container"> <!-- Oyun kutusu -->
+        <div class="game-header"> <!-- Başlık ve skor alanı -->
+            <h1 class="game-title">🐍 NOKİA 3310 V2</h1> <!-- Oyun başlığı -->
+            <div class="game-stats"> <!-- Skor ve seviye göstergeleri -->
+                <div class="level-badge">
+                    ⚡ Level <span id="levelDisplay">1</span> <!-- Seviye göstergesi -->
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="scoreDisplay">0</div> <!-- Anlık skor -->
+                    <div class="stat-label">Skor</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="highScoreDisplay">0</div> <!-- En yüksek skor -->
+                    <div class="stat-label">🏆 En Yüksek</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-canvas"> <!-- Oyun alanı -->
+            <canvas id="gameCanvas" width="800" height="600"></canvas> <!-- Oyun için tuval -->
+            
+            <div id="pauseOverlay" class="overlay pause-overlay" style="display: none;">
+                <h2>DURAKLADI</h2>
+                <p>Devam etmek için SPACE tuşuna basın</p>
+            </div>
+            
+            <div id="gameOverOverlay" class="overlay gameover-overlay" style="display: none;">
+                <h2>OYUN BİTTİ</h2>
+                <p>Skorunuz: <span id="finalScore">0</span></p>
+                <p id="newHighScore" class="new-highscore" style="display: none;">🎉 YENİ REKOR! 🎉</p>
+                <p>Yeniden başlamak için R tuşuna basın</p>
+            </div>
+        </div>
+
+        <div class="game-controls"> <!-- Kontrol butonları ve talimatlar -->
+            <div class="control-buttons">
+                <button id="pauseBtn" class="btn btn-primary">
+                    <span id="pauseIcon">⏸️</span>
+                    <span id="pauseText">Duraklat</span>
+                </button>
+                <button id="restartBtn" class="btn btn-success">
+                    🔄 Yeni Oyun
+                </button>
+            </div>
+            <div class="game-instructions">
+                <div>🎮 WASD veya Ok tuşları ile hareket edin</div>
+                <div>⏸️ SPACE ile duraklat • 🔄 R ile yeniden başlat</div>
+            </div>
+        </div>
+
+        <div class="food-legend"> <!-- Yiyecek türleri efsanesi -->
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ef4444;"></div>
+                <span>Normal (+10)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f97316;"></div>
+                <span>Özel (+25)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3b82f6;"></div>
+                <span>Bonus (+50)</span>
+            </div>
+        </div>
+        <div style="position: fixed; right: 20px; bottom: 10px; color: #00ff88; font-weight: bold; font-size: 1.1rem; z-index: 1000; text-shadow: 0 0 10px #000;">GT HAVAYOLLARI GURUR İLE SUNAR...</div>
+    </div>
+
+    <script>
+        // Oyun sabitleri
+        const GRID_SIZE = 20; // Her bir hücrenin boyutu (px)
+        const CANVAS_WIDTH = 800; // Tuval genişliği
+        const CANVAS_HEIGHT = 600; // Tuval yüksekliği
+        const GRID_WIDTH = CANVAS_WIDTH / GRID_SIZE; // Yatayda kaç hücre var
+        const GRID_HEIGHT = CANVAS_HEIGHT / GRID_SIZE; // Dikeyde kaç hücre var
+
+        const DIRECTIONS = {
+            UP: { x: 0, y: -1 }, // Yukarı hareket
+            DOWN: { x: 0, y: 1 }, // Aşağı hareket
+            LEFT: { x: -1, y: 0 }, // Sola hareket
+            RIGHT: { x: 1, y: 0 } // Sağa hareket
+        };
+
+        // Oyun durumu
+        let gameState = {
+            snake: [{ x: 10, y: 10 }], // Yılanın başlangıç konumu
+            food: null, // Yiyecek nesnesi
+            direction: DIRECTIONS.RIGHT, // Yılanın mevcut yönü
+            nextDirection: DIRECTIONS.RIGHT, // Sonraki yön (kullanıcıdan gelen)
+            score: 0, // Anlık skor
+            highScore: getHighScore(), // En yüksek skor (localStorage'dan)
+            gameOver: false, // Oyun bitti mi?
+            paused: false, // Oyun duraklatıldı mı?
+            speed: 8, // Oyun hızı (FPS)
+            level: 1 // Seviye
+        };
+
+        // Tuval ve bağlam
+        const canvas = document.getElementById('gameCanvas'); // Tuval elementi
+        const ctx = canvas.getContext('2d'); // 2D çizim bağlamı
+
+        // Oyun elemanları (HTML)
+        const scoreDisplay = document.getElementById('scoreDisplay'); // Skor gösterimi
+        const highScoreDisplay = document.getElementById('highScoreDisplay'); // En yüksek skor gösterimi
+        const levelDisplay = document.getElementById('levelDisplay'); // Seviye gösterimi
+        const pauseBtn = document.getElementById('pauseBtn'); // Duraklat butonu
+        const restartBtn = document.getElementById('restartBtn'); // Yeniden başlat butonu
+        const pauseOverlay = document.getElementById('pauseOverlay'); // Duraklatma ekranı
+        const gameOverOverlay = document.getElementById('gameOverOverlay'); // Oyun bitti ekranı
+        const finalScore = document.getElementById('finalScore'); // Oyun sonu skor
+        const newHighScore = document.getElementById('newHighScore'); // Yeni rekor bildirimi
+        const pauseIcon = document.getElementById('pauseIcon'); // Duraklat/Devam ikon
+        const pauseText = document.getElementById('pauseText'); // Duraklat/Devam metni
+
+        // Efektler için partiküller
+        let particles = [];
+
+        // Yardımcı fonksiyonlar
+        function getRandomPosition() { // Rastgele bir pozisyon döndürür
+            return {
+                x: Math.floor(Math.random() * GRID_WIDTH), // Rastgele x
+                y: Math.floor(Math.random() * GRID_HEIGHT) // Rastgele y
+            };
+        }
+
+        function isPositionEqual(pos1, pos2) { // İki pozisyon aynı mı?
+            return pos1.x === pos2.x && pos1.y === pos2.y;
+        }
+
+        function isValidPosition(pos) { // Pozisyon oyun alanı içinde mi?
+            return pos.x >= 0 && pos.x < GRID_WIDTH && pos.y >= 0 && pos.y < GRID_HEIGHT;
+        }
+
+        function generateFood() { // Yiyecek üretir (yılanın üstüne gelmeyecek şekilde)
+            let position;
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            do {
+                position = getRandomPosition(); // Rastgele pozisyon al
+                attempts++;
+            } while (
+                attempts < maxAttempts && 
+                gameState.snake.some(segment => isPositionEqual(segment, position)) // Yılanın üstüne gelmesin
+            );
+
+            const rand = Math.random(); // Rastgele sayı
+            let type, value, color;
+
+            if (rand < 0.7) {
+                type = 'normal'; // %70 normal yiyecek
+                value = 10;
+                color = '#ef4444';
+            } else if (rand < 0.9) {
+                type = 'special'; // %20 özel yiyecek
+                value = 25;
+                color = '#f97316';
+            } else {
+                type = 'bonus'; // %10 bonus yiyecek
+                value = 50;
+                color = '#3b82f6';
+            }
+
+            return { position, type, value, color }; // Yiyecek nesnesi döndür
+        }
+
+        function moveSnake() { // Yılanı bir adım hareket ettirir
+            const head = gameState.snake[0]; // Yılanın başı
+            const newHead = {
+                x: head.x + gameState.direction.x, // Yeni baş x
+                y: head.y + gameState.direction.y // Yeni baş y
+            };
+
+            gameState.snake.unshift(newHead); // Yeni baş ekle
+            gameState.snake.pop(); // Kuyruğu sil
+        }
+
+        function growSnake() { // Yılanı uzatır (yeni segment ekler)
+            const tail = gameState.snake[gameState.snake.length - 1]; // Kuyruk
+            gameState.snake.push({ ...tail }); // Kuyruğun aynısını ekle
+        }
+
+        function checkCollision() { // Çarpışma kontrolü (duvar veya kendisiyle)
+            const head = gameState.snake[0]; // Yılanın başı
+            
+            // Duvar çarpışması
+            if (!isValidPosition(head)) {
+                return true;
+            }
+            
+            // Kendine çarpma
+            for (let i = 1; i < gameState.snake.length; i++) {
+                if (isPositionEqual(head, gameState.snake[i])) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function isOppositeDirection(dir1, dir2) { // Ters yön kontrolü (geri gitmeyi engeller)
+            return dir1.x === -dir2.x && dir1.y === -dir2.y;
+        }
+
+        function calculateSpeed(level) { // Seviye arttıkça hızı artırır
+            return Math.max(3, 10 - level);
+        }
+
+        function calculateLevel(score) { // Skora göre seviye hesaplar
+            return Math.floor(score / 100) + 1;
+        }
+
+        function getHighScore() { // En yüksek skoru localStorage'dan alır
+            const saved = localStorage.getItem('snakeHighScore');
+            return saved ? parseInt(saved, 10) : 0;
+        }
+
+        function saveHighScore(score) { // Skor rekoru kırdıysa kaydeder
+            const currentHighScore = getHighScore();
+            if (score > currentHighScore) {
+                localStorage.setItem('snakeHighScore', score.toString());
+                return true;
+            }
+            return false;
+        }
+
+        function createParticles(x, y, color) { // Yiyecek yendiğinde partikül efekti oluşturur
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x + GRID_SIZE / 2, // Başlangıç x
+                    y: y + GRID_SIZE / 2, // Başlangıç y
+                    vx: (Math.random() - 0.5) * 4, // X yönü hızı
+                    vy: (Math.random() - 0.5) * 4, // Y yönü hızı
+                    life: 1, // Yaşam süresi
+                    color: color // Renk
+                });
+            }
+        }
+
+        function updateParticles() { // Partikülleri günceller ve ömrü bitenleri siler
+            particles = particles.filter(particle => {
+                particle.x += particle.vx; // X konumunu güncelle
+                particle.y += particle.vy; // Y konumunu güncelle
+                particle.life -= 0.02; // Yaşam süresini azalt
+                return particle.life > 0; // Yaşam süresi bitenleri sil
+            });
+        }
+
+        // Çizim fonksiyonları
+        function drawBackground() { // Arka planı çizer
+            const gradient = ctx.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); // Gradyan oluştur
+            gradient.addColorStop(0, '#1a202c'); // Başlangıç rengi
+            gradient.addColorStop(1, '#2d3748'); // Bitiş rengi
+            ctx.fillStyle = gradient; // Dolgu rengi ayarla
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); // Dikdörtgen çiz
+        }
+
+        function drawSnake() { // Yılanı çizer
+            gameState.snake.forEach((segment, index) => {
+                const x = segment.x * GRID_SIZE; // Segment x
+                const y = segment.y * GRID_SIZE; // Segment y
+                
+                if (index === 0) { // Yılan başı
+                    ctx.shadowColor = '#00ff88'; // Parlak gölge
+                    ctx.shadowBlur = 15; // Gölge bulanıklığı
+                    ctx.fillStyle = '#00ff88'; // Baş rengi
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; // Kenarlık rengi
+                    ctx.lineWidth = 2; // Kenarlık kalınlığı
+                    
+                    ctx.fillRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4); // Baş dikdörtgeni
+                    ctx.strokeRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4); // Kenarlık
+                    
+                    // Gözler
+                    ctx.shadowBlur = 0; // Gölgeyi sıfırla
+                    ctx.fillStyle = 'white'; // Göz beyazı
+                    ctx.fillRect(x + 6, y + 6, 4, 4); // Sol göz
+                    ctx.fillRect(x + GRID_SIZE - 10, y + 6, 4, 4); // Sağ göz
+                    ctx.fillStyle = 'black'; // Göz bebeği
+                    ctx.fillRect(x + 7, y + 7, 2, 2); // Sol göz bebeği
+                    ctx.fillRect(x + GRID_SIZE - 9, y + 7, 2, 2); // Sağ göz bebeği
+                } else { // Yılan gövdesi
+                    const alpha = 1 - (index / gameState.snake.length) * 0.6; // Şeffaflık
+                    ctx.shadowBlur = 0; // Gölge yok
+                    ctx.fillStyle = `rgba(0, 200, 100, ${alpha})`; // Gövde rengi
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; // Kenarlık rengi
+                    ctx.lineWidth = 1; // Kenarlık kalınlığı
+                    
+                    ctx.fillRect(x + 3, y + 3, GRID_SIZE - 6, GRID_SIZE - 6); // Gövde dikdörtgeni
+                    ctx.strokeRect(x + 3, y + 3, GRID_SIZE - 6, GRID_SIZE - 6); // Kenarlık
+                }
+            });
+        }
+
+        function drawFood() { // Yiyeceği çizer
+            if (!gameState.food) return; // Yiyecek yoksa çık
+            
+            const x = gameState.food.position.x * GRID_SIZE; // Yiyecek x
+            const y = gameState.food.position.y * GRID_SIZE; // Yiyecek y
+            
+            // Nabız efekti
+            const pulse = Math.sin(Date.now() * 0.01) * 0.2 + 1; // Yiyeceğin büyüyüp küçülmesini sağlar
+            const size = (GRID_SIZE - 4) * pulse; // Yiyecek boyutunu nabza göre ayarla
+            const offset = (GRID_SIZE - size) / 2; // Ortalamak için ofset hesapla
+            
+            ctx.shadowColor = gameState.food.color; // Yiyecek etrafına renkli gölge
+            ctx.shadowBlur = 20; // Gölge bulanıklığı
+            ctx.fillStyle = gameState.food.color; // Yiyecek rengi
+            
+            if (gameState.food.type === 'bonus') { // Eğer bonus yiyecekse
+                // Bonus için yıldız şekli
+                drawStar(x + GRID_SIZE/2, y + GRID_SIZE/2, size/3, size/6, 5); // Yıldız çiz
+            } else {
+                ctx.beginPath(); // Yeni bir şekil başlat
+                ctx.arc(x + GRID_SIZE/2, y + GRID_SIZE/2, size/2, 0, Math.PI * 2); // Daire çiz
+                ctx.fill(); // Daireyi doldur
+            }
+            
+            ctx.shadowBlur = 0; // Gölgeyi sıfırla
+        }
+
+        function drawStar(x, y, radius1, radius2, npoints) { // Yıldız şekli çizer (bonus yiyecek için)
+            const angle = Math.PI * 2 / npoints; // Her bir köşe arasındaki açı
+            const halfAngle = angle / 2; // Yarım açı
+            
+            ctx.beginPath(); // Yeni şekil başlat
+            for (let a = 0; a < Math.PI * 2; a += angle) { // Tüm köşeler için döngü
+                let sx = x + Math.cos(a) * radius2; // Dış köşe x
+                let sy = y + Math.sin(a) * radius2; // Dış köşe y
+                ctx.lineTo(sx, sy); // Çizgi çiz
+                sx = x + Math.cos(a + halfAngle) * radius1; // İç köşe x
+                sy = y + Math.sin(a + halfAngle) * radius1; // İç köşe y
+                ctx.lineTo(sx, sy); // Çizgi çiz
+            }
+            ctx.closePath(); // Şekli kapat
+            ctx.fill(); // Şekli doldur
+        }
+
+        function drawParticles() { // Partikülleri çizer
+            particles.forEach(particle => {
+                ctx.globalAlpha = particle.life; // Şeffaflık
+                ctx.fillStyle = particle.color; // Renk
+                ctx.beginPath(); // Yeni şekil
+                ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2); // Daire
+                ctx.fill(); // Doldur
+            });
+            ctx.globalAlpha = 1; // Şeffaflığı sıfırla
+        }
+
+        // Oyun mantığı
+        function updateGame() { // Oyun durumunu günceller
+            if (gameState.paused || gameState.gameOver) return; // Duraklatıldıysa veya bittiyse çık
+            
+            // Yönü güncelle
+            gameState.direction = gameState.nextDirection;
+            
+            // Yılanı hareket ettir
+            moveSnake();
+            
+            // Çarpışma kontrolü
+            if (checkCollision()) {
+                gameState.gameOver = true; // Oyun bitti
+                const isNewHighScore = saveHighScore(gameState.score); // Rekor kırıldı mı?
+                showGameOver(isNewHighScore); // Oyun bitti ekranı
+                return;
+            }
+            
+            // Yiyecek yeme kontrolü
+            if (gameState.food && isPositionEqual(gameState.snake[0], gameState.food.position)) {
+                // Yılanı uzat
+                growSnake();
+                
+                // Skoru artır
+                gameState.score += gameState.food.value;
+                
+                // Partikül efekti oluştur
+                const foodX = gameState.food.position.x * GRID_SIZE;
+                const foodY = gameState.food.position.y * GRID_SIZE;
+                createParticles(foodX, foodY, gameState.food.color);
+                
+                // Yeni yiyecek oluştur
+                gameState.food = generateFood();
+                
+                // Seviye ve hızı güncelle
+                const newLevel = calculateLevel(gameState.score);
+                if (newLevel > gameState.level) {
+                    gameState.level = newLevel;
+                    gameState.speed = calculateSpeed(gameState.level);
+                }
+                
+                // En yüksek skoru güncelle
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                }
+                
+                updateDisplay();
+            }
+        }
+
+        function render() { // Tüm oyun elemanlarını çizer
+            drawBackground(); // Arka plan
+            drawFood(); // Yiyecek
+            drawSnake(); // Yılan
+            drawParticles(); // Partiküller
+            updateParticles(); // Partikül güncelle
+        }
+
+        function updateDisplay() { // Skor, seviye ve rekoru ekrana yazar
+            scoreDisplay.textContent = gameState.score; // Skor
+            highScoreDisplay.textContent = gameState.highScore; // En yüksek skor
+            levelDisplay.textContent = gameState.level; // Seviye
+        }
+
+        function showGameOver(isNewHighScore) { // Oyun bitti ekranını gösterir
+            finalScore.textContent = gameState.score; // Son skor
+            newHighScore.style.display = isNewHighScore ? 'block' : 'none'; // Rekor bildirimi
+            gameOverOverlay.style.display = 'flex'; // Oyun bitti ekranı göster
+        }
+
+        function togglePause() { // Oyunu duraklatır/devam ettirir
+            if (gameState.gameOver) return; // Oyun bittiyse çık
+            
+            gameState.paused = !gameState.paused; // Duraklat/Devam et
+            pauseOverlay.style.display = gameState.paused ? 'flex' : 'none'; // Duraklatma ekranı
+            pauseIcon.textContent = gameState.paused ? '▶️' : '⏸️'; // İkon değiştir
+            pauseText.textContent = gameState.paused ? 'Devam Et' : 'Duraklat'; // Metin değiştir
+        }
+
+        function resetGame() { // Oyunu başa alır
+            gameState = {
+                snake: [{ x: 10, y: 10 }], // Başlangıç yılanı
+                food: generateFood(), // Yeni yiyecek
+                direction: DIRECTIONS.RIGHT, // Başlangıç yönü
+                nextDirection: DIRECTIONS.RIGHT, // Sonraki yön
+                score: 0, // Skor sıfırla
+                highScore: getHighScore(), // En yüksek skor
+                gameOver: false, // Oyun bitti mi?
+                paused: false, // Duraklatıldı mı?
+                speed: 8, // Hız
+                level: 1 // Seviye
+            };
+            
+            particles = []; // Partikülleri sıfırla
+            pauseOverlay.style.display = 'none'; // Duraklatma ekranı kapat
+            gameOverOverlay.style.display = 'none'; // Oyun bitti ekranı kapat
+            pauseIcon.textContent = '⏸️'; // İkonu sıfırla
+            pauseText.textContent = 'Duraklat'; // Metni sıfırla
+            
+            updateDisplay(); // Skorları güncelle
+        }
+
+        // Olay dinleyiciler
+        document.addEventListener('keydown', (e) => { // Klavye kontrolleri
+            if (e.code === 'Space') { // Space tuşu
+                e.preventDefault(); // Varsayılanı engelle
+                togglePause(); // Duraklat/Devam et
+                return;
+            }
+            
+            if (e.key === 'r' || e.key === 'R') { // R tuşu
+                resetGame(); // Yeniden başlat
+                return;
+            }
+            
+            if (gameState.paused || gameState.gameOver) return; // Duraklatıldıysa veya bittiyse çık
+            
+            let newDirection = gameState.nextDirection; // Yeni yön
+            
+            switch(e.code) { // Yön tuşları ve WASD
+                case 'ArrowUp':
+                case 'KeyW':
+                    newDirection = DIRECTIONS.UP;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    newDirection = DIRECTIONS.DOWN;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    newDirection = DIRECTIONS.LEFT;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    newDirection = DIRECTIONS.RIGHT;
+                    break;
+            }
+            
+            // Ters yöne gitmeyi engelle
+            if (!isOppositeDirection(newDirection, gameState.direction)) {
+                gameState.nextDirection = newDirection; // Yönü güncelle
+            }
+        });
+
+        pauseBtn.addEventListener('click', togglePause); // Duraklat butonu
+        restartBtn.addEventListener('click', resetGame); // Yeniden başlat butonu
+
+        // Oyun döngüsü
+        let lastTime = 0; // Son zaman
+        function gameLoop(currentTime) { // Oyun döngüsü fonksiyonu
+            // Oyun mantığını ve çizimi sürekli çalıştırır
+            if (currentTime - lastTime > 1000 / gameState.speed) { // FPS ayarı
+                updateGame(); // Oyun mantığı
+                lastTime = currentTime; // Zamanı güncelle
+            }
+            
+            render(); // Çizim
+            requestAnimationFrame(gameLoop); // Döngüyü devam ettir
+        }
+
+        // Oyunu başlatır
+        function init() { // Başlatıcı fonksiyon
+            gameState.food = generateFood(); // İlk yiyeceği oluştur
+            updateDisplay(); // Skorları güncelle
+            gameLoop(0); // Oyun döngüsünü başlat
+        }
+
+        // Oyunu başlat
+        init(); // Başlatıcıyı çağır
+    </script>
+</body>
+</html>
